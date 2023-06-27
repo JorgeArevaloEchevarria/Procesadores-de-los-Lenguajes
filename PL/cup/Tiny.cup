@@ -1,0 +1,84 @@
+package asint;
+
+import java_cup.runtime.*;
+import alex.AnalizadorLexicoTiny;
+import alex.UnidadLexica;
+import errors.GestionErroresTiny;
+
+scan with {: return getScanner().next_token(); :};
+parser code {: 
+   private GestionErroresTiny errores;
+   public void syntax_error(Symbol unidadLexica) {
+     errores.errorSintactico((UnidadLexica)unidadLexica);
+   }
+:};
+init with {: 
+   errores = new GestionErroresTiny();
+   AnalizadorLexicoTiny alex = (AnalizadorLexicoTiny)getScanner();
+   alex.fijaGestionErrores(errores);
+:};
+
+
+terminal    PARAPERTURA,PARCIERRE,CORAPERTURA,CORCIERRE,PUNTO,PUNTOYCOMA,
+			COMA,DOSPUNTOS,IGUAL,SUMA,RESTA,MUL,DIV,MOD,AND,OR,NOT,MAYOR,
+			MENOR,MAYORIGUAL,MENORIGUAL,DISTINTO,IGUALDAD,INDIRECCION,INT,
+			REAL,BOOL,STRING,NULL,TRUE,FALSE,PROC,IF,THEN,ELSE,WHILE,
+			DO,SEQ,BEGIN,END,RECORD,ARRAY,OF,NEW,DELETE,READ,WRITE,NL,VAR,
+			TYPE,CADENA,ID,ENTEROS,REALES;
+			
+
+non terminal  	Prog,Decs,LDecs,Dec,DecVar,DecTipo,DecProc,PForms,LPForms,ParamFormal,
+				Tipo,TipoBase,TipoArray,TipoReg,TipoPunt,Campos,Campo,SecIs,Is,LIs,I,
+				TO,IAlternativa,Iwhile,Iread,Iwrite,Inl,Inew,Idelete,IAsigOLlamada,
+				PReales,LPReales,Iseq,OpBinRel,OpBinMas,OpBinMenos,OpBinAnd,OpBinOr,
+				OpBin3,OpUn4,Exp,E0,E1,E2,E3,E4,E5,E6;
+			  
+
+Prog 			::= Decs SecIs;
+Decs 			::= LDecs | ;
+LDecs 			::= LDecs Dec | Dec;
+Dec 			::= DecVar | DecTipo | DecProc;
+DecVar 			::= VAR ID DOSPUNTOS Tipo PUNTOYCOMA;
+DecTipo 		::= TYPE ID DOSPUNTOS Tipo PUNTOYCOMA;
+DecProc 		::= PROC ID PARAPERTURA PForms PARCIERRE Decs SecIs;
+PForms 			::= LPForms | ;
+LPForms 		::= LPForms COMA ParamFormal | ParamFormal;
+ParamFormal 	::= VAR ID DOSPUNTOS Tipo | ID DOSPUNTOS Tipo;
+Tipo 			::= TipoBase | TipoArray | TipoReg | TipoPunt;
+TipoBase 		::= INT | REAL | BOOL | STRING;
+TipoArray 		::= ARRAY CORAPERTURA ENTEROS CORCIERRE OF TipoBase;
+TipoReg 		::= RECORD Campos END;
+TipoPunt 		::= INDIRECCION TipoBase;
+Campos 			::= Campos Campo | Campo;
+Campo	 		::= ID DOSPUNTOS Tipo PUNTOYCOMA ;
+SecIs 			::= BEGIN Is END;
+Is		 		::= LIs | ;
+LIs		 		::= LIs I;
+I 				::= IAsigOLlamada | IAlternativa | Iwhile | Iread | Iwrite | Inl | Inew | Idelete | Iseq ;
+TO 				::= PUNTOYCOMA | ;
+IAlternativa 	::= IF Exp THEN Is END TO | IF Exp THEN Is ELSE Is END TO ;
+Iwhile 			::= WHILE Exp DO Is END TO;
+Iread 			::= READ Exp ;
+Iwrite 			::= WRITE Exp ;
+Inl 			::= NL ;
+Inew 			::= NEW Exp ;
+Idelete 		::= DELETE Exp ;
+IAsigOLlamada 	::= Exp IGUAL Exp PUNTOYCOMA | Exp PARAPERTURA PReales PARCIERRE PUNTOYCOMA;
+PReales		 	::= LPReales |  ;
+LPReales		::= LPReales COMA Exp | Exp ;
+Iseq		 	::= SEQ Decs SecIs TO;
+OpBinRel 		::= MENOR | MAYOR | MENORIGUAL | MAYORIGUAL | IGUALDAD | DISTINTO;
+OpBinMas	 	::= SUMA;
+OpBinMenos	 	::= RESTA;
+OpBinAnd	 	::= AND;
+OpBinOr		 	::= OR;
+OpBin3		 	::= MUL | DIV | MOD;
+OpUn4	 		::= RESTA | NOT;
+Exp	 			::= E0;
+E0	 			::= E1 OpBinRel E1 | E1;
+E1	 			::= E2 OpBinMas E2 | E1 OpBinMenos E2 | E2;
+E2	 			::= E3 OpBinAnd E3 | E3 OpBinOr E2 | E3;
+E3	 			::= E3 OpBin3 E4 | E4;
+E4	 			::= OpUn4 E4 | E5;
+E5	 			::= E5 CORAPERTURA E0 CORCIERRE | E5 PUNTO ID | E5 INDIRECCION | E6;
+E6	 			::= ID | ENTEROS | REALES | CADENA | TRUE | FALSE | NULL | PARAPERTURA E0 PARCIERRE;

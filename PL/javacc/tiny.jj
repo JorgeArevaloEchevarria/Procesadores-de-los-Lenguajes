@@ -1,0 +1,134 @@
+options  {
+  STATIC=false;
+}  
+PARSER_BEGIN(AnalizadorSintacticoTiny)
+package asint;
+
+public class AnalizadorSintacticoTiny {}
+PARSER_END(AnalizadorSintacticoTiny)
+  TOKEN:{<#letra:["a"-"z","A"-"Z"]>}
+  TOKEN:{<#digPos:["1"-"9"]>}
+  TOKEN:{<#digito:<digPos>|"0">}
+  TOKEN:{<#parteEntera:<digPos> (<digito>)* |"0">} 
+  TOKEN:{<#parteDecimal: "." (<digito>)* <digPos>>}
+  TOKEN:{<#parteExponcial: ["E","e"] (<signo>)? <parteEntera>>}
+  TOKEN:{<#signo:["+","-"]>} 
+  TOKEN:{<#subrayado:"_">}
+  TOKEN:{<parApertura:"(">}
+  TOKEN:{<parCierre:")">}
+  TOKEN:{<corApertura:"[">}
+  TOKEN:{<corCierre:"]">}
+  TOKEN:{<punto:".">}
+  TOKEN:{<puntoYComa:";">}
+  TOKEN:{<coma:",">}
+  TOKEN:{<dosPuntos:":">}
+  TOKEN:{<igual:"=">}
+  TOKEN:{<suma:"+">}
+  TOKEN:{<resta:"-">}
+  TOKEN:{<mul:"*">}
+  TOKEN:{<div:"/">}
+  TOKEN:{<mod:"%">}
+  TOKEN:{<and:"and">}
+  TOKEN:{<or:"or">}
+  TOKEN:{<not:"not">}
+  TOKEN:{<mayor:">">}
+  TOKEN:{<menor:"<">}
+  TOKEN:{<mayorIgual:">=">}
+  TOKEN:{<menorIgual:"<=">}
+  TOKEN:{<distinto:"!=">}
+  TOKEN:{<igualdad:"==">}
+  TOKEN:{<indireccion:"^">}
+  TOKEN:{<intKW:"int">}
+  TOKEN:{<real:"real">}
+  TOKEN:{<bool:"bool">}
+  TOKEN:{<string:"string">}
+  TOKEN:{<nullKW:"null">}
+  TOKEN:{<trueKW:"true">}
+  TOKEN:{<falseKW:"false">}
+  TOKEN:{<proc:"proc">}
+  TOKEN:{<ifKW:"if">}
+  TOKEN:{<then:"then">}
+  TOKEN:{<elseKW:"else">}
+  TOKEN:{<whileKW:"while">}
+  TOKEN:{<doKW:"do">}
+  TOKEN:{<seq:"seq">}
+  TOKEN:{<begin:"begin">}
+  TOKEN:{<end:"end">}
+  TOKEN:{<record:"record">}
+  TOKEN:{<array:"array">}
+  TOKEN:{<of:"of">}
+  TOKEN:{<newKW:"new">}
+  TOKEN:{<delete:"delete">}
+  TOKEN:{<read:"read">}
+  TOKEN:{<write:"write">}
+  TOKEN:{<nl:"nl">}
+  TOKEN:{<var:"var">}
+  TOKEN:{<type:"type">}
+  SKIP:{<["\t"," ","\r","\b","\n"]>}
+  TOKEN:{<cadena:(["a"-"z","A"-"Z"])*>}
+  TOKEN:{<id:<letra>(<letra>|<digito>|<subrayado>)*>}
+  TOKEN:{<enteros: (<signo>)? (<parteEntera>|"0")>}
+  TOKEN:{<reales: <parteEntera> (<parteDecimal> | <parteExponcial> | <parteDecimal> <parteExponcial> )>}
+  
+  void Prog()			: {} {Decs() SecIs()}
+  void Decs()			: {} {LDecs() | {}}
+  void LDecs()			: {} {Dec() RLDecs()}
+  void RLDecs()			: {} {Dec() RLDecs() | {}}
+  void Dec()			: {} {DecVar() | DecTipo() | DecProc()}
+  void DecVar()			: {} {<var> <id> <dosPuntos> Tipo() <puntoYComa>}
+  void DecTipo()		: {} {<type> <id> <dosPuntos> Tipo() <puntoYComa>}
+  void DecProc()		: {} {<proc> <id> <parApertura> PForms() <parCierre> Decs() SecIs()}
+  void PForms()			: {} {LPForms() | {}}
+  void LPForms()		: {} {ParamFormal() RLPForms()}
+  void RLPForms()		: {} {<coma> ParamFormal() RLPForms() | {}}
+  void ParamFormal()	: {} {<var> <id> <dosPuntos> Tipo() | <id> <dosPuntos> Tipo() }
+  void Tipo()			: {} { TipoBase() | TipoArray() | TipoReg() | TipoPunt()}
+  void TipoBase()		: {} { <intKW> | <real> | <bool> | <string>}
+  void TipoArray()		: {} {<array> <corApertura> <enteros> <corCierre> <of> TipoBase()}
+  void TipoReg()		: {} {<record> Campos() <end>}
+  void TipoPunt()		: {} {<indireccion> TipoBase()}
+  void Campos()			: {} {Campo() RCampos()}
+  void RCampos()		: {} {Campo() RCampos() | {}}
+  void Campo()			: {} {<id> <dosPuntos> Tipo() <puntoYComa>}
+  void SecIs()			: {} {<begin> Is() <end>}
+  void Is()				: {} {LIs()| {}}
+  void LIs()			: {} {I() RLIs()}
+  void RLIs()			: {} {I() RLIs() | {}}
+  void I()				: {} { IAsigOLlamada() | IAlternativa() | Iwhile() | Iread() | Iwrite() | Inl() | Inew() | Idelete() | Iseq()}
+  void TO()				: {} {<puntoYComa> | {}}
+  void IAlternativa()	: {} {<ifKW> Exp() <then> Is() RAlternativa()}
+  void RAlternativa()	: {} {<end> TO() | <elseKW> Is() <end> TO() | {}}
+  void Iwhile()			: {} {<whileKW> Exp() <doKW> Is() <end>}
+  void Iread()			: {} {<read> Exp()}
+  void Iwrite()			: {} {<write> Exp()}
+  void Inl()			: {} {<nl>}
+  void Inew()			: {} {<newKW> Exp()}
+  void Idelete()		: {} {<delete> Exp()}
+  void IAsigOLlamada()	: {} {Exp() RAsigOLlamada()}
+  void RAsigOLlamada()	: {} {<igual> Exp() | <parApertura> PReales() <parCierre> | {}}
+  void PReales()		: {} {LPReales() | {}}
+  void LPReales()		: {} {Exp() RLPReales()}
+  void RLPReales()		: {} {<coma> Exp() RLPReales() | {}}
+  void Iseq()			: {} {<seq> Decs() SecIs() TO()}
+  void OpBinRel()		: {} { <menor> | <mayor> | <menorIgual> | <mayorIgual> | <igualdad> | <distinto>}
+  void OpBinMas()		: {} {<suma>}
+  void OpBinMenos()		: {} {<resta>}
+  void OpBinAnd()		: {} {<and>}
+  void OpBinOr()		: {} {<or>}
+  void OpBin3()			: {} { <mul> | <div> | <mod>}
+  void OpUn4()			: {} { <resta> | <not>}
+  void Exp()			: {} { E0()}
+  void E0()				: {} { E1() RE0()}
+  void RE0()			: {} { OpBinRel() E1() | {}}
+  void E1()				: {} { E2() RE10() RE11()}
+  void RE10()			: {} { OpBinMas() E2() | {}}
+  void RE11()			: {} { OpBinMenos() E2() RE11() | {}}
+  void E2()				: {} { E3() RE2()}
+  void RE2()			: {} { OpBinAnd() E3() | OpBinOr() E2() | {}}
+  void E3()				: {} { E4() RE3()}
+  void RE3()			: {} { OpBin3() E4() RE3() | {}}
+  void E4()				: {} { OpUn4() E4() | E5() }
+  void E5()				: {} { E6() RE5()}
+  void RE5()			: {} { <corApertura> E0() <corCierre> RE5() | <punto> <id> RE5() | <indireccion> RE5() | {}}
+  void E6()				: {} { <id> | <enteros> | <reales> | <cadena> | <trueKW> | <falseKW> | <nullKW> | <parApertura> E0() <parCierre>}
+  
